@@ -1,0 +1,11 @@
+{
+"points" :
+  [
+  [[1, "Warsaw"], ["tour", "history", "WWII"]],
+  [[2, "Krakow"], ["castle", "medieval", "square", "church"]],
+  [[3, "Oswiecim"], ["Auschwitz", "museum", "WWII", "camp"]],
+  [[4, "Wieliczka"], ["mine", "salt", "sculpture"]]
+  ],
+
+"comment" : "#  0 1 airport#  1 2 bus#  2 3 bus#  3 4 bus#  4 5 airport#http://study-tours.pl/en/school-trips/warszawa-krakow/"
+}

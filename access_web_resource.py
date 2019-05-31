@@ -42,7 +42,7 @@ class Summarizer:
             formatted_text = self.preprocess_format_summary(raw)
             summary = self.create_summary(raw, self.words_weighted_frequencies(formatted_text))
             print(summary)
-            self.summary_list.append(summary)
+            #self.summary_list.append(summary)
     #wyszukanie paragrafów
     def paragraphize(self, text):
         paragraphs = text.find_all('p')
@@ -54,9 +54,7 @@ class Summarizer:
 
     #usuwanie znaków specjalnych oraz cyfr
     def preprocess_format_summary(self, text):
-
-
-        formatted_article_text = re.sub('[^a-zA-Z]', ' ', text)
+        formatted_article_text = re.sub('[^\'a-zA-Z]', ' ', text)
         formatted_article_text = re.sub(r'\s+', ' ', formatted_article_text)
         return formatted_article_text
 
@@ -142,7 +140,7 @@ class GoogleSearch:
             from googlesearch import search
         except ImportError:
             print("No Module named 'google' Found")
-        for i in search(query=self.name, tld='co.in', lang='en',num=10,stop=1,pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
+        for i in search(query=self.name, tld='co.in', lang='en',num=10,stop=2,pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
             res_num += 1
             print (res_num)
             print(i + '\n')
@@ -151,4 +149,4 @@ class GoogleSearch:
 
 gs = GoogleSearch('Poland ')
 summary = Summarizer(30, 10)
-summary.access_web_resource(gs.Gsearch())
+summary.summarize_web_sources(gs.Gsearch())
