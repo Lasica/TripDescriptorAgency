@@ -41,7 +41,7 @@ class Summarizer:
             # z raw skorzystamy do zbudowania podsumowania
             formatted_text = self.preprocess_format_summary(raw)
             summary = self.create_summary(raw, self.words_weighted_frequencies(formatted_text))
-            print(summary)
+            return(summary)
             #self.summary_list.append(summary)
     #wyszukanie paragrafów
     def paragraphize(self, text):

@@ -6,10 +6,13 @@ from spade.template import Template
 from spade import quit_spade
 
 
+SenderAgentId = ["spade-sag-master@blabber.im", "spadeagent0"]
+
 class SenderAgent(Agent):
     class InformBehav(OneShotBehaviour):
         async def run(self):
             print("InformBehav running")
+
             msg = Message(to="spade-sag-dummy@blabber.im")     # Instantiate the message
             msg.set_metadata("performative", "inform")  # Set the "inform" FIPA performative
             msg.body = "spaghetto"                    # Set the message content
@@ -45,6 +48,7 @@ class ReceiverAgent(Agent):
         template = Template()
         template.set_metadata("performative", "inform")
         self.add_behaviour(b, template)
+        
 
 
 
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     receiveragent = ReceiverAgent("spade-sag-dummy@blabber.im", "spadeagent1")
     future = receiveragent.start()
     future.result() # wait for receiver agent to be prepared.
-    senderagent = SenderAgent("spade-sag-master@blabber.im", "spadeagent0")
+    senderagent = SenderAgent(SenderAgentId[0], SenderAgentId[1])
     senderagent.start()
 
     while receiveragent.is_alive():
