@@ -12,7 +12,7 @@ class SenderAgent(Agent):
             print("InformBehav running")
             msg = Message(to="spade-sag-dummy@blabber.im")     # Instantiate the message
             msg.set_metadata("performative", "inform")  # Set the "inform" FIPA performative
-            msg.body = "Hello World"                    # Set the message content
+            msg.body = "spaghetto"                    # Set the message content
 
             await self.send(msg)
             print("Message sent!")

@@ -147,6 +147,6 @@ class GoogleSearch:
             self.urls.append(i)
         return self.urls
 
-gs = GoogleSearch('Poland ')
-summary = Summarizer(30, 10)
-summary.summarize_web_sources(gs.Gsearch())
+#gs = GoogleSearch('Poland ')
+#summary = Summarizer(30, 10)
+#summary.summarize_web_sources(gs.Gsearch())
