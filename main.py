@@ -32,6 +32,7 @@ if __name__ == "__main__":
     trip = [v for k, v in trip_plan.items() if k == "points"]
     trip_points = [v for v in trip[0]]
 
+    print(trip_points)
     #dla wejścia wykonaj wywołaj agenty
 
     #odbierz od agentów i zapisz w pliku

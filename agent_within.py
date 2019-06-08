@@ -70,6 +70,7 @@ class PlacesAgent(Agent):
                 else:
                     print("Did not received any message after 10 seconds")
 
+
 if __name__ == "__main__":
     places = PlacesAgent(PlacesAgentId[0], PlacesAgentId[1])
     future = places.start()
