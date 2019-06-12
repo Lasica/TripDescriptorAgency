@@ -21,10 +21,11 @@ import heapq
 #oczywista heurystyka w wypadku wikipedii i ogólnie tekstów opisowych turystycznych może działać na zasadzie
 #Pobierz pierwsze kilka zdań bo zwykle w nich jest zawarty konkret, a później dopasuj pozostałe. do rozważenia
 class Summarizer:
-    def __init__(self, sentence_length, summary_length):
+    def __init__(self, sentence_length, summary_length, keywords):
         self.sent_lent    = sentence_length #maksymalna długość zdania które chcemy mieć w podsumowaniu
         self.sum_len      = summary_length #liczba zdań które chcemy mieć w podsumowaniu
         self.summary_list = {} #słownik podsumowań do robienia podsumowania z podsumowań
+        self.keywords     = keywords
 
     def summarize_web_sources(self, url):
         for i in url:
@@ -43,6 +44,23 @@ class Summarizer:
             summary = self.create_summary(raw, self.words_weighted_frequencies(formatted_text))
             return(summary)
             #self.summary_list.append(summary)
+    #wyszukanie paragrafów
+    def paragraphize(self, text):
+        paragraphs = text.find_all('p')
+        article = ''
+
+        for p in paragraphs:
+            article += p.text
+        return article
+
+    def summarize_text(self, text):
+        # z kolei w formatted_text usunięto znaki specjalne i cyfry, jest przydatny do badania częstotliwości wyrazów,
+        # z raw skorzystamy do zbudowania podsumowania
+        formatted_text = self.preprocess_format_summary(text)
+        summary = self.create_summary(text, self.words_weighted_frequencies(formatted_text))
+        return(summary)
+
+
     #wyszukanie paragrafów
     def paragraphize(self, text):
         paragraphs = text.find_all('p')
@@ -87,14 +105,13 @@ class Summarizer:
         word_frequencies = {}
         for word in nltk.word_tokenize(formatted_text):
             if word not in stopwords:
-                if word not in word_frequencies.keys():
-                    word_frequencies[word] = 1
-                else:
-                    word_frequencies[word] += 1
+                word_frequencies[word] = word_frequencies.get(word, 0) + 1
         maximum_freq = max(word_frequencies.values())
 
         for word in word_frequencies.keys():
-            word_frequencies[word] = word_frequencies[word] / maximum_freq
+            word_frequencies[word] /= maximum_freq
+            if word in self.keywords:
+                word_frequencies[word] *= 2.5 # TODO remove magic numbers
         return word_frequencies
 
     #metoda specjalnie na przyszykowanie tekstu z wikipedii
@@ -108,9 +125,6 @@ class Summarizer:
 
         return article
 
-
-def build_chunked_tree(tagged_sentences, grammar):#budowa drzewek dla listy zdań
-    pass
 
 def chunk_sentences(tagged_sentence, grammar):
     chunk_rules = nltk.RegexpParser(grammar)#tworzenie drzewa zdania, definujemy parser
@@ -140,7 +154,7 @@ class GoogleSearch:
             from googlesearch import search
         except ImportError:
             print("No Module named 'google' Found")
-        for i in search(query=self.name, tld='co.in', lang='en',num=10,stop=2,pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
+        for i in search(query=self.name, tld='co.in', lang='en',num=1,stop=1,pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
             res_num += 1
             print (res_num)
             print(i + '\n')

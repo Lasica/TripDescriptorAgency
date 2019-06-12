@@ -8,20 +8,26 @@ from access_web_resource import Summarizer
 from access_web_resource import GoogleSearch
 from aioxmpp import Presence
 
-PlacesAgentId = ["spade-sag-places@blabber.im", "spadeplaces"]
-SenderAgentId   = ["spade-sag-master@blabber.im", "spadeagent0"]
+addressBook = {
+    "placesAgent": { 'address': "spade-sag-places@blabber.im", 'password': "spadeplaces"},
+    "wikiAgent": {'address': "spade-sag-master@blabber.im", 'password': "spadeagent0"}
+}
 #główny agent rozsyłający żądania
+
+
 class SummarizerPlacesAgent(Agent):
     #odbieramy przy starcie informacje o punktach wycieczki
-    #format places: [[[1, 'Warsaw'], ['tour', 'history', 'WWII']]]
-    def __init__(self, ip, _pass, places, summ_parms):
-        Agent.__init__(self, ip, _pass)
+    #format places: Warsaw; tour, WWII, palace;
+    def __init__(self, address, password, places, summ_params):
+        super().__init__(address, password)
         self.places = places
-        self.summ_parms = summ_parms
+        self.summ_params = summ_params
+        self.slave_agents = []
 
     async def setup(self):
         print("Agent starting . . .")
         b = self.MainBehav()
+        b.summ_params = self.summ_parms
         self.add_behaviour(b)
 
     class MainBehav(OneShotBehaviour):
@@ -46,7 +52,7 @@ class SummarizerPlacesAgent(Agent):
                         print("SummarizeAndReturn running")
 
                         #przygotowanie wstępnej zawartości wiadomości
-                        msg = Message(to=PlacesAgentId[0])  # Instantiate the message
+                        msg = Message(to=addressBook['placesAgent']['address'])  # Instantiate the message
                         msg.set_metadata("performative", "inform")  # Set the "inform" FIPA performative
 
                         gs = GoogleSearch(self.source + ":" + self.place)
@@ -73,17 +79,43 @@ class SummarizerPlacesAgent(Agent):
                 print("MainPlacesRun")
                 #print(self.agent.places[1])
                 #wikiAgent = self.SingleSummaryAgent(SenderAgentId[0],SenderAgentId[1], "wikipedia", )
-
                 msg = await self.receive()  # wait for a message for 10 seconds
                 if msg:
                     print("Message received with content: {}".format(msg.body))
+                    splitstr = msg.body.split(';')
+                    places = []
+                    for i in range(len(places)//2):
+                        places[i] = {"place":splitstr[2*i], "keywords":splitstr[2*i+1].split(',')}
+                        wiki_agent = self.SingleSummaryAgent(
+                            *list(addressBook['wikiAgent'].values()),
+                            'wikipedia',
+                            places[i]['place'],
+                            places[i]['keywords'],
+                            self.summ_params
+                        )
+                        await wiki_agent.start()
+                        travel_agent = self.SingleSummaryAgent(
+                            *list(addressBook['wikiAgent'].values()),
+                            'wikitravel',
+                            places[i]['place'],
+                            places[i]['keywords'],
+                            self.summ_params
+                        )
+                        googlesearch_agent = self.SingleSummaryAgent(
+                            *list(addressBook['wikiAgent'].values()),
+                            '',
+                            places[i]['place'],
+                            places[i]['keywords'],
+                            self.summ_params
+                        )
+
                 else:
                     print("Did not received any message after 10 seconds")
                 await self.agent.stop()
 
 if __name__ == "__main__":
     place_to_visit = [[[1, 'Warsaw'], ['tour', 'history', 'WWII']]]
-    placesAgent = SummarizerPlacesAgent(*PlacesAgentId, place_to_visit, [30, 10])
+    placesAgent = SummarizerPlacesAgent(*list(addressBook['placesAgent'].values()), place_to_visit, [30, 10])
     future = placesAgent.start()
     future.result()
 
