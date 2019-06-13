@@ -1,9 +1,5 @@
 import time
-from spade.agent import Agent
-from spade.behaviour import CyclicBehaviour, OneShotBehaviour
-from spade.message import Message
-from spade import quit_spade
-from examples.LookUpAgent import LookUpAgent
+from agents.LookUpAgent import LookUpAgent
 
 
 
