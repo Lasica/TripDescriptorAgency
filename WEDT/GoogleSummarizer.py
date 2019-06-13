@@ -29,7 +29,11 @@ class GoogleSummarizer:
 
     def summarize_web_sources(self, url):
         for i in url:
-            html = request.urlopen(i).read().decode('utf8')
+            try:
+                html = request.urlopen(i).read().decode('utf8')
+            except:
+                return "ERROR"
+
             raw = BeautifulSoup(html, 'html.parser')
 
 
