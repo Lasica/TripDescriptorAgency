@@ -1,4 +1,5 @@
 from urllib import request
+from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import nltk
 import re
@@ -30,7 +31,9 @@ class GoogleSummarizer:
     def summarize_web_sources(self, url):
         for i in url:
             try:
-                html = request.urlopen(i).read().decode('utf8')
+                req  = Request(i, headers={'User-Agent': 'Mozilla/5.0'})
+                #html = request.urlopen(i).read().decode('utf8')
+                html =  urlopen(req).read().decode('utf8')
             except:
                 return "ERROR"
 
