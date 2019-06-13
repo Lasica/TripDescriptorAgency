@@ -1,18 +1,26 @@
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.template import Template
+from ..WEDT import GoogleSearch,GoogleSummarizer
+
 
 
 class LookUpBehaviour(OneShotBehaviour):
     async def run(self):
         print(f'{self.__class__.__name__}: running')
 
-        # TODO run summariser from access_web_resource
         reply = self.request[0]
         topic = self.request[1]['place']
         keywords = self.request[1]['keywords']
+
         if reply:
-            reply.body = topic + ': ' + ', '.join(keywords)
+            searchstr = ''
+            site = self.get('site')
+            if site:
+                searchstr = site + ':'
+            gs = GoogleSearch(searchstr+topic)
+            summary = GoogleSummarizer(*(self.get('summariser_params')), keywords)
+            reply.body = summary.summarize_web_sources(gs.Gsearch())
             await self.send(reply)
         else:
             print(f'{self.__class__.__name__}: error: reply source does not exist')

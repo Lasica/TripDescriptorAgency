@@ -1,8 +1,7 @@
 from urllib import request
-from bs4    import BeautifulSoup
+from bs4 import BeautifulSoup
 import nltk
 import re
-import pprint
 import heapq
 
 # kroki w wydobyciu informacji z tekstu to po kolei
@@ -20,12 +19,13 @@ import heapq
 #udało mi się to zaimplementować, jednakże można to poprawić: niekiedy zwraca zdania w trochę złej kolejności:
 #oczywista heurystyka w wypadku wikipedii i ogólnie tekstów opisowych turystycznych może działać na zasadzie
 #Pobierz pierwsze kilka zdań bo zwykle w nich jest zawarty konkret, a później dopasuj pozostałe. do rozważenia
-class Summarizer:
-    def __init__(self, sentence_length, summary_length, keywords):
+class GoogleSummarizer:
+    def __init__(self, sentence_length, summary_length, keywords_weight, keywords):
         self.sent_lent    = sentence_length #maksymalna długość zdania które chcemy mieć w podsumowaniu
         self.sum_len      = summary_length #liczba zdań które chcemy mieć w podsumowaniu
         self.summary_list = {} #słownik podsumowań do robienia podsumowania z podsumowań
         self.keywords     = keywords
+        self.keywords_weight = keywords_weight
 
     def summarize_web_sources(self, url):
         for i in url:
@@ -111,7 +111,7 @@ class Summarizer:
         for word in word_frequencies.keys():
             word_frequencies[word] /= maximum_freq
             if word in self.keywords:
-                word_frequencies[word] *= 2.5 # TODO remove magic numbers
+                word_frequencies[word] *= self.keywords_weight # TODO remove magic numbers
         return word_frequencies
 
     #metoda specjalnie na przyszykowanie tekstu z wikipedii
@@ -126,41 +126,6 @@ class Summarizer:
         return article
 
 
-def chunk_sentences(tagged_sentence, grammar):
-    chunk_rules = nltk.RegexpParser(grammar)#tworzenie drzewa zdania, definujemy parser
-    return chunk_rules.parse(tagged_sentence)
 
-def vocab_build(text):
-    tokens = nltk.wordpunct_tokenize(text)
-    #wybór interesujących tokenów, dodać może jakąś funkcję do zrobienia tego
-    text = nltk.Text(tokens)
-    words = [w.lower() for w in text]
-    return sorted(set(words))
-
-def preprocess_doc(document):
-    sentences   = nltk.sent_tokenize(document)#podział na zdania
-    token_sent  = [nltk.word_tokenize(sent) for sent in sentences]#tokenizacja zdań
-    pos_sent    = [nltk.pos_tag(tok_sent) for tok_sent in token_sent]#przypisanie części mowy wyrazom w zdaniu
-    return pos_sent
-
-class GoogleSearch:
-    def __init__(self, name_search):
-        self.name = name_search
-        self.urls = []
-
-    def Gsearch(self):
-        res_num = 0
-        try:
-            from googlesearch import search
-        except ImportError:
-            print("No Module named 'google' Found")
-        for i in search(query=self.name, tld='co.in', lang='en',num=1,stop=1,pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
-            res_num += 1
-            print (res_num)
-            print(i + '\n')
-            self.urls.append(i)
-        return self.urls
-
-#gs = GoogleSearch('Poland ')
 #summary = Summarizer(30, 10)
 #summary.summarize_web_sources(gs.Gsearch())
