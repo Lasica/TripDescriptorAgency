@@ -1,5 +1,4 @@
 from spade.agent import Agent
-from spade.presence import  presence
 from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 
