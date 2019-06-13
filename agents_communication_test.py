@@ -1,10 +1,7 @@
 import time
-from spade.agent import Agent
-from spade.behaviour import CyclicBehaviour, OneShotBehaviour
-from spade.message import Message
 from spade import quit_spade
 from examples.SenderAgent import SenderAgent
-from examples.EchoAgent import EchoAgent
+from agents.EchoAgent import EchoAgent
 
 SenderAgentId = ["spade-sag-master@blabber.im", "spadeagent0"]
 

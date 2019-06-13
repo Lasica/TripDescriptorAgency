@@ -1,7 +1,6 @@
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.template import Template
-from spade.message import Message
 
 
 class LookUpBehaviour(OneShotBehaviour):
