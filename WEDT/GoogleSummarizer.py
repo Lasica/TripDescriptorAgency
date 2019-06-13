@@ -20,11 +20,12 @@ import heapq
 #oczywista heurystyka w wypadku wikipedii i ogólnie tekstów opisowych turystycznych może działać na zasadzie
 #Pobierz pierwsze kilka zdań bo zwykle w nich jest zawarty konkret, a później dopasuj pozostałe. do rozważenia
 class GoogleSummarizer:
-    def __init__(self, sentence_length, summary_length, keywords):
+    def __init__(self, sentence_length, summary_length, keywords_weight, keywords):
         self.sent_lent    = sentence_length #maksymalna długość zdania które chcemy mieć w podsumowaniu
         self.sum_len      = summary_length #liczba zdań które chcemy mieć w podsumowaniu
         self.summary_list = {} #słownik podsumowań do robienia podsumowania z podsumowań
         self.keywords     = keywords
+        self.keywords_weight = keywords_weight
 
     def summarize_web_sources(self, url):
         for i in url:
@@ -110,7 +111,7 @@ class GoogleSummarizer:
         for word in word_frequencies.keys():
             word_frequencies[word] /= maximum_freq
             if word in self.keywords:
-                word_frequencies[word] *= 2.5 # TODO remove magic numbers
+                word_frequencies[word] *= self.keywords_weight # TODO remove magic numbers
         return word_frequencies
 
     #metoda specjalnie na przyszykowanie tekstu z wikipedii
