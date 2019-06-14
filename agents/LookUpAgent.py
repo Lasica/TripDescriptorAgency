@@ -1,8 +1,7 @@
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.template import Template
-from ..WEDT import GoogleSearch,GoogleSummarizer
-
+from TripDescriptorAgency.WEDT import GoogleSearch, GoogleSummarizer
 
 
 class LookUpBehaviour(OneShotBehaviour):
@@ -21,6 +20,12 @@ class LookUpBehaviour(OneShotBehaviour):
             gs = GoogleSearch(searchstr+topic)
             summary = GoogleSummarizer(*(self.get('summariser_params')), keywords)
             reply.body = summary.summarize_web_sources(gs.Gsearch())
+            if (reply.body != 'ERROR'):
+                print(reply.body)
+            else:
+                print("Błąd")
+                reply.body = ''
+                reply.set_metadata("request", "failed")
             await self.send(reply)
         else:
             print(f'{self.__class__.__name__}: error: reply source does not exist')
