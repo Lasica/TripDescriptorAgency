@@ -1,7 +1,7 @@
 import time
 from spade import quit_spade
 from examples.SenderAgent import SenderAgent
-from agents.EchoAgent import EchoAgent
+from examples.EchoAgent import EchoAgent
 
 SenderAgentId = ["spade-sag-master@blabber.im", "spadeagent0"]
 

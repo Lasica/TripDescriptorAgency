@@ -1,7 +1,6 @@
 import time
 from spade.agent import Agent
 from spade.message import Message
-from spade.template import Template
 from spade import quit_spade
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from access_web_resource import Summarizer
