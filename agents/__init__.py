@@ -1,6 +1,6 @@
 from .MainMasterAgent import MainMasterAgent
 from .LookUpAgent import LookUpAgent
-
+from .PlacesAgent import PlacesAgent
 agents = {
     'MasterAgent':
         {
@@ -26,4 +26,10 @@ agents = {
             'agentClass': LookUpAgent,
             'params': {'summariser_params': [30, 10, 2.5]}
         },
+    'PlacesMaster':
+        {
+            'jid': 'PlacesMaster@blabber.im',
+            'agentClass': PlacesAgent,
+            'params' : {}
+        }
 }
