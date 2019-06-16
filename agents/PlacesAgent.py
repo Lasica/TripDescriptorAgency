@@ -13,26 +13,30 @@ addressBook = {
 
 
 class CallLookupAgentBehaviour(OneShotBehaviour):
-    def __init__(self, request, source):
+    def __init__(self, request, source, reqId):
         print(f'{self.__class__.__name__}: init')
         super().__init__()
         self.request = request
         self.source = source
+        self.reqId = reqId
 
     async def run(self):
         response = self.request.make_reply()
 
-        further_req = Message(to = addressBook.get(self.source))
-        further_req.set_metadata("performative" ,"query")
+        #tworzymy wiadomość do przekazania do konkretnego agenta
+        further_req = Message(to=addressBook.get(self.source))#ustawiamy adresata
+        further_req.set_metadata('request_id', self.reqId)#ustawiamy id zapytania: w agencie adresacie wiadomość jest
+        # tworzona jako reply żądania, więc request_id pozostanie to samo i odpowiedź trafi do tego konkretnego zachowania
 
-        further_req.body = self.request.body
+        further_req.body = self.request.body #przekazujemy treść zapytania
+        # tworzymy wiadomość do przekazania do konkretnego agenta
 
         await self.send(further_req)
 
         resp = await self.receive()
-        response.body = resp.body
+        response.body = resp.body# odbieramy streszczenie
 
-        await self.send(response)
+        await self.send(response)# odsyłamy streszczenie
 
 class MainPlacesBehaviour(CyclicBehaviour):
     async def run(self):
@@ -42,12 +46,16 @@ class MainPlacesBehaviour(CyclicBehaviour):
 
         if req:
             source = random.choice(["wikipedia", "wikitravel", "google"])
-            mainLookupBehav = CallLookupAgentBehaviour(req, source)
+
 
             response_template = Template()#dla danego hehavioura tworzę oddzielny template aby było wiadomo gdzie zwrócić wiadomość
-            #TODO dodać zdefiniowanie jakiegoś konkretnego template'a dla zachowania wywołującego danego agenta lookupu aby
-            #TODO dispatcher wiedział, gdzie zwrócić wiadomość, rozpropragować tę informację do danego lookupa aby mógł odpowiednio odpowiedzieć
-            self.agent.add_behaviour(mainLookupBehav)
+            requestId = random.randint(1,100)#tworzymy losowe id zapytania, aby dispatcher
+            # mógł rozpoznać konkretny behaviour, do którego ma trafić wiadomość zwrotna
+
+            response_template.metadata('request_id', requestId)
+            mainLookupBehav = CallLookupAgentBehaviour(req, source, requestId)
+
+            self.agent.add_behaviour(mainLookupBehav, response_template)
 
 
 class PlacesAgent(Agent):
