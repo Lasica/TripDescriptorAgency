@@ -22,12 +22,12 @@ class LookUpBehaviour(OneShotBehaviour):
             reply.body = summary.summarize_web_sources(gs.Gsearch())
             if (reply.body != 'ERROR'):
                 print(reply.body)
-                self.presence.set_unavailable()
-                # TODO add tasklet to check later source availability
             else:
                 print("Błąd")
                 reply.body = ''
                 reply.set_metadata("request", "failed")
+                self.presence.set_unavailable()
+                # TODO add tasklet to check later source availability
             await self.send(reply)
         else:
             print(f'{self.__class__.__name__}: error: reply source does not exist')

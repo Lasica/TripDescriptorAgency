@@ -51,6 +51,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
         req = await self.receive(timeout=30)
 
         if (req and str(req.sender) not in addressBook.values()):
+            print(req.sender)
             contacts = self.agent.presence.get_contacts()
             available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
 
