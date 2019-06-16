@@ -25,7 +25,7 @@ class GoogleSummarizer:
         self.sent_lent    = sentence_length #maksymalna długość zdania które chcemy mieć w podsumowaniu
         self.sum_len      = summary_length #liczba zdań które chcemy mieć w podsumowaniu
         self.summary_list = {} #słownik podsumowań do robienia podsumowania z podsumowań
-        self.keywords     = keywords
+        self.keywords     = nltk.word_tokenize(keywords)
         self.keywords_weight = keywords_weight
 
     def summarize_web_sources(self, url):
