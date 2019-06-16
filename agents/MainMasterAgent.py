@@ -2,6 +2,8 @@ from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.message import Message
 from spade.template import Template
+import time
+import uuid
 
 addressBook = {
     "place": "PlacesMaster@blabber.im",
@@ -16,14 +18,24 @@ helloMessage = "Hello, I am Trip Descriptor Agent. Message me a list of places y
                "Warsaw; museum of warsaw uprising\nfinished"
 finishMessage = "Here's what I've been able to compose so far:\n{}"
 
+
 class QuerryForInfoBehaviour(OneShotBehaviour):
-    def __init__(self, origin):
+    def __init__(self, task):
         super().__init__()
         self.result = None
+        self.error = None
+        self.task = task
 
     async def run(self):
-        print(f'{self.__class__.__name__}: running {self.origin}')
-
+        print(f'{self.__class__.__name__}: running {self.task}')
+        request = Message(to=self.template.sender, thread=self.template.thread)
+        request.body = self.task
+        await self.send(request)
+        response = await self.receive(timeout=360)
+        if response:
+            self.result = response.body
+        else:
+            self.error = True
 
 
 class ClientDialogueBehaviour(CyclicBehaviour):
@@ -33,14 +45,6 @@ class ClientDialogueBehaviour(CyclicBehaviour):
         self.first_message = msg
         self.jobs = []
 
-    async def gather_info(self, topic, keywords):
-        # ask all of your sources for given topic with keywords
-        for contact, address in addressBook.items():
-            msg = Message(to=address)
-            # msg.set_metadata(contact, "request")
-            # msg.body = request.body
-            # await self.send(msg)
-
     async def on_start(self):
         self.reply_template.body = helloMessage
         await self.send(self.reply_template)
@@ -48,29 +52,38 @@ class ClientDialogueBehaviour(CyclicBehaviour):
     async def run(self):
         print(f'{self.__class__.__name__}: running')
         request = await self.receive(timeout=360)
+        print(f'{self.__class__.__name__}: received message {request}')
         if request and "finish" not in request.body:
             if ";" in request.body:
                 self.reply_template.body = "Acknowledged. I'm ready for further instructions."
                 await self.send(self.reply_template)
 
-                self.jobs.append(QuerryForInfoBehaviour)
+                for job, address in addressBook.items():
+                    t = Template(sender=address, thread=uuid.uuid4())
+                    self.agent.add_behaviour(self.jobs[-1], t)
+                    self.jobs.append(QuerryForInfoBehaviour(request.body))
             else:
                 self.reply_template.body = "The pattern is wrong. Use: <topic>; <optional: keywords>"
                 await self.send(self.reply_template)
         else:
-            self.reply_template.body = finishMessage.format(self.compile_answer())
-            await self.send(self.reply_template)
             self.kill()
 
-        #
-        # for i in range(len(addressBook)):
-        #     result = await self.receive()
-        #     results[result.sender] = result.body
-        #
-        # response = Message(to=request.sender)
-        # response.body = "\n".join(results.values())
-        # await self.send(response)
+    async def on_end(self):
+        self.reply_template.body = finishMessage.format(self.compile_answer())
+        await self.send(self.reply_template)
 
+    def compile_answer(self):
+        tries = 10
+        while tries > 1:
+            finished = all([beh.is_done() for beh in self.jobs])
+            if finished:
+                break
+            self.reply_template.body = f"Collecting necessary information... {10-tries}"
+            self.send(self.reply_template)
+            time.sleep(5)
+            tries -= 1
+        resultsFromBehs = [beh.result for beh in self.jobs if beh.is_done() and not beh.error]
+        return "\n---\n".join(resultsFromBehs)
 
 
 class MainMasterBehav(CyclicBehaviour):
@@ -79,23 +92,12 @@ class MainMasterBehav(CyclicBehaviour):
         print(f'{self.__class__.__name__}: running')
 
         request = await self.receive()
+        print(f'{self.__class__.__name__}: received message {request}')
 
         if request:
-            reply = request.make_reply()
-            # reply.body = helloMessage
-            # await self.send(reply)
             cb = ClientDialogueBehaviour(request)
             self.agent.add_behaviour(cb, Template(sender=request.sender))
-
-            # for contact, address in addressBook.items():
-            #     msg = Message(to=address)
-            #     msg.set_metadata(contact, "request")
-            #     msg.body = request.body
-            #     await self.send(msg)
-            #
-            # response = Message(to=request.sender)
-            # response.body = "\n".join(results.values())
-            # await self.send(response)
+            await cb.enqueue(request)
 
 
 class MainMasterAgent(Agent):

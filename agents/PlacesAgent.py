@@ -3,6 +3,7 @@ from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.message import Message
 from spade.template import Template
 import random
+import uuid
 
 addressBook = {
     "wikipedia": "LookUpAgent2@blabber.im",
@@ -10,6 +11,7 @@ addressBook = {
     "google": "LookUpAgent3@blabber.im"
 }
 
+NAMESPACE = uuid.UUID('a0728f87-7e9a-4416-b369-32418a3c1cc8')
 
 
 class CallLookupAgentBehaviour(OneShotBehaviour):
@@ -49,7 +51,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
 
 
             response_template = Template()#dla danego hehavioura tworzę oddzielny template aby było wiadomo gdzie zwrócić wiadomość
-            requestId = random.randint(1,100)#tworzymy losowe id zapytania, aby dispatcher
+            requestId = uuid.uuid4().hex#tworzymy losowe id zapytania, aby dispatcher
             # mógł rozpoznać konkretny behaviour, do którego ma trafić wiadomość zwrotna
 
             response_template.metadata('request_id', requestId)
