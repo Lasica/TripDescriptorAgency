@@ -22,6 +22,8 @@ class LookUpBehaviour(OneShotBehaviour):
             reply.body = summary.summarize_web_sources(gs.Gsearch())
             if (reply.body != 'ERROR'):
                 print(reply.body)
+                self.presence.set_unavailable()
+                # TODO add tasklet to check later source availability
             else:
                 print("Błąd")
                 reply.body = ''
@@ -38,6 +40,11 @@ class LookUpBehaviour(OneShotBehaviour):
 
 
 class AwaitRequestBehaviour(CyclicBehaviour):
+    async def on_start(self):
+        self.presence.set_available()
+        self.presence.on_subscribe = self.on_subscribe
+        self.presence.on_subscribed = self.on_subscribed
+
     async def run(self):
         print(f'{self.__class__.__name__}: running')
 
@@ -75,6 +82,15 @@ class AwaitRequestBehaviour(CyclicBehaviour):
         places = {'place':splitstr[0], 'keywords':keywords}
         print(f"Parsed message with params: {places}")
         return places
+
+    def on_subscribed(self, jid):
+        print("[{}] Agent {} has accepted the subscription.".format(self.agent.name, jid.split("@")[0]))
+        print("[{}] Contacts List: {}".format(self.agent.name, self.agent.presence.get_contacts()))
+
+    def on_subscribe(self, jid):
+        print("[{}] Agent {} asked for subscription. Let's aprove it.".format(self.agent.name, jid.split("@")[0]))
+        self.presence.approve(jid)
+        self.presence.subscribe(jid)
 
 
 
