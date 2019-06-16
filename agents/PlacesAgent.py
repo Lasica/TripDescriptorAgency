@@ -44,7 +44,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
     async def run(self):
         print(f'{self.__class__.__name__}: running')
 
-        req = await self.receive()
+        req = await self.receive(timeout=30)
 
         if req:
             source = random.choice(["wikipedia", "wikitravel", "google"])

@@ -28,7 +28,7 @@ class QuerryForInfoBehaviour(OneShotBehaviour):
 
     async def run(self):
         print(f'{self.__class__.__name__}: running {self.task}')
-        request = Message(to=self.template.sender, thread=self.template.thread)
+        request = Message(to=str(self.template.sender), thread=str(self.template.thread))
         request.body = self.task
         await self.send(request)
         response = await self.receive(timeout=360)
@@ -59,9 +59,9 @@ class ClientDialogueBehaviour(CyclicBehaviour):
                 await self.send(self.reply_template)
 
                 for job, address in addressBook.items():
-                    t = Template(sender=address, thread=uuid.uuid4())
-                    self.agent.add_behaviour(self.jobs[-1], t)
+                    t = Template(sender=address, thread=uuid.uuid4().hex)
                     self.jobs.append(QuerryForInfoBehaviour(request.body))
+                    self.agent.add_behaviour(self.jobs[-1], t)
             else:
                 self.reply_template.body = "The pattern is wrong. Use: <topic>; <optional: keywords>"
                 await self.send(self.reply_template)
@@ -69,17 +69,17 @@ class ClientDialogueBehaviour(CyclicBehaviour):
             self.kill()
 
     async def on_end(self):
-        self.reply_template.body = finishMessage.format(self.compile_answer())
+        self.reply_template.body = finishMessage.format(await self.compile_answer())
         await self.send(self.reply_template)
 
-    def compile_answer(self):
+    async def compile_answer(self):
         tries = 10
         while tries > 1:
             finished = all([beh.is_done() for beh in self.jobs])
             if finished:
                 break
             self.reply_template.body = f"Collecting necessary information... {10-tries}"
-            self.send(self.reply_template)
+            await self.send(self.reply_template)
             time.sleep(5)
             tries -= 1
         resultsFromBehs = [beh.result for beh in self.jobs if beh.is_done() and not beh.error]
@@ -87,17 +87,28 @@ class ClientDialogueBehaviour(CyclicBehaviour):
 
 
 class MainMasterBehav(CyclicBehaviour):
+    async def on_start(self):
+        self.jobs = {}
+
     async def run(self):
         results = {}
         print(f'{self.__class__.__name__}: running')
 
-        request = await self.receive()
-        print(f'{self.__class__.__name__}: received message {request}')
+        request = await self.receive(timeout=30)
 
-        if request:
+        if request and request.sender not in self.jobs:
+            print(f'{self.__class__.__name__}: received message {request}')
             cb = ClientDialogueBehaviour(request)
-            self.agent.add_behaviour(cb, Template(sender=request.sender))
+            self.agent.add_behaviour(cb, Template(sender=str(request.sender)))
+            self.jobs[request.sender] = cb
             await cb.enqueue(request)
+
+        to_remove = []
+        for snd,beh in self.jobs.items():
+            if beh.is_done():
+                to_remove.append(snd)
+        for b in to_remove:
+            del self.jobs[b]
 
 
 class MainMasterAgent(Agent):
