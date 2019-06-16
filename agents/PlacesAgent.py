@@ -32,6 +32,7 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         await self.send(further_req)
 
         resp = await self.receive(timeout=10)
+        print(f'{self.__class__.__name__}: received {resp}')
         if resp:
             response.body = resp.body
         else:
@@ -40,23 +41,26 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
 
 
 class MainPlacesBehaviour(CyclicBehaviour):
+    async def on_start(self):
+        self.sources = [src.lower() for src in addressBook.values()]
+
     async def run(self):
         print(f'{self.__class__.__name__}: running')
 
         req = await self.receive(timeout=30)
         print(f'{self.__class__.__name__}: received {req}')
 
-        if (req and str(req.sender) not in addressBook.values()):
-            print(req.sender)
+        if req and str(req.sender).split('/')[0] not in self.sources:
             contacts = self.agent.presence.get_contacts()
-            available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
+            #available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
+            available_sources = addressBook['wikipedia']
             print(f'{self.__class__.__name__}: sources {available_sources}')
 
             source = random.choice(available_sources)
             requestId = uuid.uuid4().hex
-            response_template = Template(metadata={'request_id': requestId}, sender=source)
+            response_template = Template(metadata={'request_id': req.metadata.get('request_id', requestId)})
 
-            mainLookupBehav = CallLookupAgentBehaviour(req, source, requestId)
+            mainLookupBehav = CallLookupAgentBehaviour(req, source, req.metadata.get('request_id', requestId))
             self.agent.add_behaviour(mainLookupBehav, response_template)
 
 

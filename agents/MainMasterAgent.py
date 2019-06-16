@@ -28,14 +28,18 @@ class QuerryForInfoBehaviour(OneShotBehaviour):
 
     async def run(self):
         print(f'{self.__class__.__name__}: running {self.task}')
-        request = Message(to=str(self.template.sender), thread=str(self.template.thread))
+        request = Message(to=str(self.template.sender), metadata=self.template.metadata)
         request.body = self.task
+
         await self.send(request)
-        response = await self.receive(timeout=360)
-        if response:
+
+        response = await self.receive(timeout=60)
+        print(f'{self.__class__.__name__}: got message {response}')
+        if response and response.body != "Error":
             self.result = response.body
         else:
             self.error = True
+        self.kill()
 
 
 class ClientDialogueBehaviour(CyclicBehaviour):
@@ -59,7 +63,7 @@ class ClientDialogueBehaviour(CyclicBehaviour):
                 await self.send(self.reply_template)
 
                 for job, address in addressBook.items():
-                    t = Template(sender=address, thread=uuid.uuid4().hex)
+                    t = Template(sender=address, metadata={'request_id': uuid.uuid4().hex})
                     self.jobs.append(QuerryForInfoBehaviour(request.body))
                     self.agent.add_behaviour(self.jobs[-1], t)
             else:
@@ -73,12 +77,13 @@ class ClientDialogueBehaviour(CyclicBehaviour):
         await self.send(self.reply_template)
 
     async def compile_answer(self):
-        tries = 10
-        while tries > 1:
+        tries = 3
+        while tries > 0:
             finished = all([beh.is_done() for beh in self.jobs])
+            print([beh.is_done() for beh in self.jobs])
             if finished:
                 break
-            self.reply_template.body = f"Collecting necessary information... {10-tries}"
+            self.reply_template.body = f"Collecting necessary information... {tries}"
             await self.send(self.reply_template)
             time.sleep(5)
             tries -= 1
@@ -88,6 +93,7 @@ class ClientDialogueBehaviour(CyclicBehaviour):
 
 class MainMasterBehav(CyclicBehaviour):
     async def on_start(self):
+        self.sources = [src.lower() for src in addressBook.values()]
         self.jobs = {}
 
     async def run(self):
@@ -96,7 +102,7 @@ class MainMasterBehav(CyclicBehaviour):
 
         request = await self.receive(timeout=30)
 
-        if request and request.sender not in self.jobs:
+        if request and request.sender not in self.jobs and str(request.sender).split('/')[0] not in self.sources:
             print(f'{self.__class__.__name__}: received message {request}')
             cb = ClientDialogueBehaviour(request)
             self.agent.add_behaviour(cb, Template(sender=str(request.sender)))
