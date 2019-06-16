@@ -21,11 +21,10 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         self.request = request
         self.source = source
         self.reqId = reqId
-        print('init lookupbehav' + self.request.body)
 
     async def run(self):
         response = self.request.make_reply()
-        print(self.request.body)
+
         #tworzymy wiadomość do przekazania do konkretnego agenta
         further_req = Message(to=addressBook.get(self.source))#ustawiamy adresata
 
@@ -33,13 +32,11 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         # tworzona jako reply żądania, więc request_id pozostanie to samo i odpowiedź trafi do tego konkretnego zachowania
         further_req.body = self.request.body #przekazujemy treść zapytania
         # tworzymy wiadomość do przekazania do konkretnego agenta
-        print('do wysylki' + further_req.body)
+
         await self.send(further_req)
 
         resp = await self.receive(timeout=10)
         if (resp):
-            print(resp.body)
-            print("body1")
             response.body = resp.body# odbieramy streszczenie
         else:
             response.body = "Błąd"
@@ -52,10 +49,11 @@ class MainPlacesBehaviour(CyclicBehaviour):
         req = await self.receive(timeout=30)
 
         if (req and req.sender not in addressBook):
-            print("request")
-            print(req.body)
-            #source = random.choice(["wikipedia", "wikitravel", "google"])
-            source = "wikipedia"
+            aval_sources_list = []
+            contacts = self.agent.presence.get_contacts()
+            available_sources = [address for address, cinfo in contacts.items() if cinfo['presence'].is_available()]
+
+            source = random.choice(aval_sources_list)
             response_template = Template()#dla danego hehavioura tworzę oddzielny template aby było wiadomo gdzie zwrócić wiadomość
             requestId = uuid.uuid4().hex#tworzymy losowe id zapytania, aby dispatcher
             # mógł rozpoznać konkretny behaviour, do którego ma trafić wiadomość zwrotna
