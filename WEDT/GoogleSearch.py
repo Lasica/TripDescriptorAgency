@@ -8,7 +8,7 @@ class GoogleSearch:
     def Gsearch(self):
         res_num = 0
 
-        for i in search(query=self.name, tld='co.in', lang='en',num=1, stop=1, pause=2):#zdefiniować parametry wyszukania jako zmienne klasy
+        for i in search(query=self.name, tld='co.in', lang='en',num=1, stop=1, pause=2):
             res_num += 1
             print (res_num)
             print(i + '\n')
