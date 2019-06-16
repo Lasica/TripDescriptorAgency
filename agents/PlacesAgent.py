@@ -28,7 +28,7 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         response = self.request.make_reply()
 
         #tworzymy wiadomość do przekazania do konkretnego agenta
-        further_req = Message(to=addressBook.get(self.source))#ustawiamy adresata
+        further_req = Message(self.source)#ustawiamy adresata
 
         further_req.set_metadata('request_id', self.reqId)#ustawiamy id zapytania: w agencie adresacie wiadomość jest
         # tworzona jako reply żądania, więc request_id pozostanie to samo i odpowiedź trafi do tego konkretnego zachowania
@@ -50,14 +50,13 @@ class MainPlacesBehaviour(CyclicBehaviour):
 
         req = await self.receive(timeout=30)
 
-        if (req and req.sender not in addressBook.values()):
+        if (req and str(req.sender) not in addressBook.values()):
             contacts = self.agent.presence.get_contacts()
             available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
 
             source = random.choice(available_sources)
-            response_template = Template()#dla danego hehavioura tworzę oddzielny template aby było wiadomo gdzie zwrócić wiadomość
-            requestId = uuid.uuid4().hex#tworzymy losowe id zapytania, aby dispatcher
-            # mógł rozpoznać konkretny behaviour, do którego ma trafić wiadomość zwrotna
+            requestId = uuid.uuid4().hex
+            response_template = Template(metadata={'request_id': requestId}, sender=source)
             response_template.metadata = {'request_id': requestId}
 
             mainLookupBehav = CallLookupAgentBehaviour(req, source, requestId)
