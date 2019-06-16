@@ -1,7 +1,7 @@
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.template import Template
-from TripDescriptorAgency.WEDT import GoogleSearch, GoogleSummarizer
+from WEDT import GoogleSearch, GoogleSummarizer
 
 
 class LookUpBehaviour(OneShotBehaviour):

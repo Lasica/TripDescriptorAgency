@@ -7,11 +7,13 @@ from aiosasl import AuthenticationFailure
 import time
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('agent', choices=agents.keys())
     parser.add_argument('--password', '-p')
     parser.add_argument('--web', action='store')
+    parser.add_argument('--all', action='store')
     parser.parse_args()
     args = parser.parse_args()
     agent_name = args.agent
