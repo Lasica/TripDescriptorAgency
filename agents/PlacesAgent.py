@@ -27,7 +27,7 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
     async def run(self):
         response = self.request.make_reply()
 
-        further_req = Message(to=self.source, metadata={'request_id', self.reqId}, body=self.request.body)
+        further_req = Message(to=self.source, metadata={'request_id': self.reqId}, body=self.request.body)
 
         await self.send(further_req)
 
@@ -44,6 +44,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
         print(f'{self.__class__.__name__}: running')
 
         req = await self.receive(timeout=30)
+        print(f'{self.__class__.__name__}: received {req}')
 
         if (req and str(req.sender) not in addressBook.values()):
             contacts = self.agent.presence.get_contacts()
