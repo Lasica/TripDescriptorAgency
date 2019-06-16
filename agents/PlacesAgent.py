@@ -21,8 +21,8 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         self.request = request
         self.source = source
         self.reqId = reqId
-        print(self.request)
-        print(self.request.body)
+        print('init lookupbehav' + self.request.body)
+
     async def run(self):
         response = self.request.make_reply()
         print(self.request.body)
@@ -33,14 +33,16 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
         # tworzona jako reply żądania, więc request_id pozostanie to samo i odpowiedź trafi do tego konkretnego zachowania
         further_req.body = self.request.body #przekazujemy treść zapytania
         # tworzymy wiadomość do przekazania do konkretnego agenta
-        print(further_req.body)
+        print('do wysylki' + further_req.body)
         await self.send(further_req)
 
-        resp = await self.receive()
-        print(resp.body)
-        print("body1")
-        response.body = resp.body# odbieramy streszczenie
-
+        resp = await self.receive(timeout=10)
+        if (resp):
+            print(resp.body)
+            print("body1")
+            response.body = resp.body# odbieramy streszczenie
+        else:
+            response.body = "Błąd"
         await self.send(response)# odsyłamy streszczenie
 
 class MainPlacesBehaviour(CyclicBehaviour):
@@ -49,7 +51,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
 
         req = await self.receive(timeout=30)
 
-        if req:
+        if (req and req.sender not in addressBook):
             print("request")
             print(req.body)
             #source = random.choice(["wikipedia", "wikitravel", "google"])
