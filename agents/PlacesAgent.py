@@ -27,26 +27,21 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
     async def run(self):
         response = self.request.make_reply()
 
-        #tworzymy wiadomość do przekazania do konkretnego agenta
-        further_req = Message(self.source)#ustawiamy adresata
-
-        further_req.set_metadata('request_id', self.reqId)#ustawiamy id zapytania: w agencie adresacie wiadomość jest
-        # tworzona jako reply żądania, więc request_id pozostanie to samo i odpowiedź trafi do tego konkretnego zachowania
-        further_req.body = self.request.body #przekazujemy treść zapytania
-        # tworzymy wiadomość do przekazania do konkretnego agenta
+        further_req = Message(to=self.source, metadata={'request_id', self.reqId}, body=self.request.body)
 
         await self.send(further_req)
 
         resp = await self.receive(timeout=10)
-        if (resp):
-            response.body = resp.body# odbieramy streszczenie
+        if resp:
+            response.body = resp.body
         else:
-            response.body = "Błąd"
-        await self.send(response)# odsyłamy streszczenie
+            response.body = "Error"
+        await self.send(response)
+
 
 class MainPlacesBehaviour(CyclicBehaviour):
     async def run(self):
-        #print(f'{self.__class__.__name__}: running')
+        print(f'{self.__class__.__name__}: running')
 
         req = await self.receive(timeout=30)
 
@@ -54,11 +49,11 @@ class MainPlacesBehaviour(CyclicBehaviour):
             print(req.sender)
             contacts = self.agent.presence.get_contacts()
             available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
+            print(f'{self.__class__.__name__}: sources {available_sources}')
 
             source = random.choice(available_sources)
             requestId = uuid.uuid4().hex
             response_template = Template(metadata={'request_id': requestId}, sender=source)
-            response_template.metadata = {'request_id': requestId}
 
             mainLookupBehav = CallLookupAgentBehaviour(req, source, requestId)
             self.agent.add_behaviour(mainLookupBehav, response_template)
