@@ -26,6 +26,7 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
 
     async def run(self):
         response = self.request.make_reply()
+        response.metadata = {'request_id': self.reqId}
 
         further_req = Message(to=self.source, metadata={'request_id': self.reqId}, body=self.request.body)
 
@@ -37,6 +38,7 @@ class CallLookupAgentBehaviour(OneShotBehaviour):
             response.body = resp.body
         else:
             response.body = "Error"
+        print(f'{self.__class__.__name__}: sending ' + str(response))
         await self.send(response)
 
 
@@ -53,7 +55,7 @@ class MainPlacesBehaviour(CyclicBehaviour):
         if req and str(req.sender).split('/')[0] not in self.sources:
             contacts = self.agent.presence.get_contacts()
             #available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
-            available_sources = addressBook['wikipedia']
+            available_sources = [addressBook['wikipedia']]
             print(f'{self.__class__.__name__}: sources {available_sources}')
 
             source = random.choice(available_sources)

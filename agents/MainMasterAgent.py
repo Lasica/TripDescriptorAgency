@@ -20,17 +20,19 @@ finishMessage = "Here's what I've been able to compose so far:\n{}"
 
 
 class QuerryForInfoBehaviour(OneShotBehaviour):
-    def __init__(self, task):
+    def __init__(self, task, adr):
         super().__init__()
         self.result = None
         self.error = None
         self.task = task
+        self.adr = adr
 
     async def run(self):
         print(f'{self.__class__.__name__}: running {self.task}')
-        request = Message(to=str(self.template.sender), metadata=self.template.metadata)
+        request = Message(to=self.adr, metadata=self.template.metadata)
         request.body = self.task
 
+        print(f'{self.__class__.__name__}: sending request {request}')
         await self.send(request)
 
         response = await self.receive(timeout=60)
@@ -63,8 +65,9 @@ class ClientDialogueBehaviour(CyclicBehaviour):
                 await self.send(self.reply_template)
 
                 for job, address in addressBook.items():
-                    t = Template(sender=address, metadata={'request_id': uuid.uuid4().hex})
-                    self.jobs.append(QuerryForInfoBehaviour(request.body))
+                    t = Template(metadata={'request_id': uuid.uuid4().hex})#sender=address,
+                    print(f'{self.__class__.__name__}: creating Query with id {t.metadata["request_id"]}')
+                    self.jobs.append(QuerryForInfoBehaviour(request.body, address))
                     self.agent.add_behaviour(self.jobs[-1], t)
             else:
                 self.reply_template.body = "The pattern is wrong. Use: <topic>; <optional: keywords>"
@@ -110,7 +113,7 @@ class MainMasterBehav(CyclicBehaviour):
             await cb.enqueue(request)
 
         to_remove = []
-        for snd,beh in self.jobs.items():
+        for snd, beh in self.jobs.items():
             if beh.is_done():
                 to_remove.append(snd)
         for b in to_remove:
