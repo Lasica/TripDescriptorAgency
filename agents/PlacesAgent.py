@@ -2,6 +2,8 @@ from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from spade.message import Message
 from spade.template import Template
+from spade.agent import PresenceManager
+from aioxmpp import PresenceType
 import random
 import uuid
 
@@ -48,12 +50,11 @@ class MainPlacesBehaviour(CyclicBehaviour):
 
         req = await self.receive(timeout=30)
 
-        if (req and req.sender not in addressBook):
-            aval_sources_list = []
+        if (req and req.sender not in addressBook.values()):
             contacts = self.agent.presence.get_contacts()
-            available_sources = [address for address, cinfo in contacts.items() if cinfo['presence'].is_available()]
+            available_sources = [str(address) for address, cinfo in contacts.items() if 'presence' in cinfo]
 
-            source = random.choice(aval_sources_list)
+            source = random.choice(available_sources)
             response_template = Template()#dla danego hehavioura tworzę oddzielny template aby było wiadomo gdzie zwrócić wiadomość
             requestId = uuid.uuid4().hex#tworzymy losowe id zapytania, aby dispatcher
             # mógł rozpoznać konkretny behaviour, do którego ma trafić wiadomość zwrotna
@@ -66,6 +67,8 @@ class MainPlacesBehaviour(CyclicBehaviour):
 class PlacesAgent(Agent):
     async def setup(self):
         print(f'{self.__class__.__name__} started')
+        for adress in addressBook:
+            self.presence.subscribe(addressBook[adress])
         b = MainPlacesBehaviour()
         templates = [Template(sender=address) for address in addressBook.values()]
         template = templates[0]
